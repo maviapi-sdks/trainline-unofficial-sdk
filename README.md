@@ -89,7 +89,7 @@ print_r($result);
 
 ```ruby
 # Gemfile
-gem "trainline_sdk", git: "https://github.com/maviapi-sdks/trainline-unofficial-sdk"
+gem "trainline_sdk", git: "https://github.com/maviapi-sdks/trainline-unofficial-sdk", branch: "main"
 ```
 
 ```ruby
