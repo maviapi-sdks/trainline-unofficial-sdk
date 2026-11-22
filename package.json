@@ -1,0 +1,32 @@
+{
+  "name": "trainline-unofficial-sdk",
+  "version": "0.1.0",
+  "description": "Unofficial Trainline API client",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./javascript/index.d.ts",
+      "default": "./javascript/index.js"
+    }
+  },
+  "types": "./javascript/index.d.ts",
+  "files": [
+    "javascript"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "keywords": [
+    "trainline",
+    "trainline-api",
+    "unofficial",
+    "sdk",
+    "maviapi"
+  ],
+  "homepage": "https://maviapi.com/apis/thetrainline",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/maviapi-sdks/trainline-unofficial-sdk.git"
+  },
+  "license": "MIT"
+}

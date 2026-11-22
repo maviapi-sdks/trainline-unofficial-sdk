@@ -1,0 +1,24 @@
+{
+  "name": "maviapi-sdks/trainline-unofficial-sdk",
+  "description": "Unofficial Trainline API client",
+  "type": "library",
+  "license": "MIT",
+  "keywords": [
+    "trainline",
+    "trainline-api",
+    "unofficial",
+    "sdk",
+    "maviapi"
+  ],
+  "homepage": "https://maviapi.com/apis/thetrainline",
+  "require": {
+    "php": ">=8.1",
+    "ext-curl": "*",
+    "ext-json": "*"
+  },
+  "autoload": {
+    "classmap": [
+      "php/"
+    ]
+  }
+}

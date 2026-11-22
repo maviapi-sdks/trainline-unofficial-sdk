@@ -1,0 +1,683 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Trainline API",
+    "version": "2026-11-14",
+    "description": "Train ticket fares and departure times between any two stations on Trainline (thetrainline.com).\n\nEvery request needs an API key in the `Authorization: Bearer <key>` header. Create one at https://maviapi.com/dashboard/keys. A successful request uses one credit, unless its operation says more (`x-credits`). That price covers 200 rows (or the operation's `x-credits-rows`); a request that returns more pays it again for each further page of that many rows. The `x-maviapi-credits` response header says what a request cost.\n\nEndpoint reference with live examples: https://maviapi.com/apis/thetrainline",
+    "termsOfService": "https://maviapi.com/terms"
+  },
+  "externalDocs": {
+    "description": "API page",
+    "url": "https://maviapi.com/apis/thetrainline"
+  },
+  "servers": [
+    {
+      "url": "https://api.maviapi.com/v1/sites/thetrainline"
+    }
+  ],
+  "security": [
+    {
+      "maviapiKey": []
+    }
+  ],
+  "paths": {
+    "/fares": {
+      "get": {
+        "operationId": "fares",
+        "summary": "Initial release",
+        "description": "Cheapest single fares and departure times between two stations, by day. Resolves free-text place names to Trainline stations, then prices the route.",
+        "x-credits": 1,
+        "parameters": [
+          {
+            "name": "from",
+            "in": "query",
+            "required": true,
+            "description": "Origin: a place/station name (resolved to the best match) or a Trainline urn code",
+            "schema": {
+              "type": "string"
+            },
+            "example": "london"
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": true,
+            "description": "Destination: a place/station name or a Trainline urn code",
+            "schema": {
+              "type": "string"
+            },
+            "example": "manchester"
+          },
+          {
+            "name": "date",
+            "in": "query",
+            "required": false,
+            "description": "First day of the window (YYYY-MM-DD, UTC). Defaults to today.",
+            "schema": {
+              "type": "string"
+            },
+            "example": "2026-08-11"
+          },
+          {
+            "name": "days",
+            "in": "query",
+            "required": false,
+            "description": "Number of days from `date` to price (1-14)",
+            "schema": {
+              "type": "integer",
+              "default": 3,
+              "minimum": 1,
+              "maximum": 14
+            },
+            "example": 3
+          },
+          {
+            "name": "currency",
+            "in": "query",
+            "required": false,
+            "description": "Fare currency",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "GBP",
+                "EUR",
+                "USD",
+                "CHF",
+                "DKK",
+                "SEK",
+                "NOK"
+              ],
+              "default": "GBP"
+            },
+            "example": "GBP"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "description": "Max days to return",
+            "schema": {
+              "type": "integer",
+              "default": 50
+            },
+            "example": 50
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "description": "Days to skip (pagination)",
+            "schema": {
+              "type": "integer",
+              "default": 0
+            },
+            "example": 0
+          },
+          {
+            "name": "refresh",
+            "in": "query",
+            "required": false,
+            "description": "Bypass and repopulate the cache",
+            "schema": {
+              "type": "boolean",
+              "default": false
+            },
+            "example": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The data, as JSON.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": [
+                        "object",
+                        "null"
+                      ],
+                      "properties": {
+                        "origin": {
+                          "type": [
+                            "object",
+                            "null"
+                          ],
+                          "properties": {
+                            "name": {
+                              "type": [
+                                "string",
+                                "null"
+                              ],
+                              "example": "London"
+                            },
+                            "code": {
+                              "type": [
+                                "string",
+                                "null"
+                              ],
+                              "example": "urn:trainline:generic:loc:182gb"
+                            }
+                          }
+                        },
+                        "destination": {
+                          "type": [
+                            "object",
+                            "null"
+                          ],
+                          "properties": {
+                            "name": {
+                              "type": [
+                                "string",
+                                "null"
+                              ],
+                              "example": "Manchester Piccadilly"
+                            },
+                            "code": {
+                              "type": [
+                                "string",
+                                "null"
+                              ],
+                              "example": "urn:trainline:generic:loc:MAN2968gb"
+                            }
+                          }
+                        },
+                        "currency": {
+                          "type": [
+                            "string",
+                            "null"
+                          ],
+                          "example": "GBP"
+                        },
+                        "journey_type": {
+                          "type": [
+                            "string",
+                            "null"
+                          ],
+                          "example": "single"
+                        },
+                        "date_from": {
+                          "type": [
+                            "string",
+                            "null"
+                          ],
+                          "example": "2026-08-11"
+                        },
+                        "date_to": {
+                          "type": [
+                            "string",
+                            "null"
+                          ],
+                          "example": "2026-08-13"
+                        },
+                        "cheapest_price": {
+                          "type": [
+                            "number",
+                            "null"
+                          ],
+                          "description": "Cheapest single fare across the window",
+                          "example": 14
+                        },
+                        "cheapest_date": {
+                          "type": [
+                            "string",
+                            "null"
+                          ],
+                          "example": "2026-08-11"
+                        },
+                        "days": {
+                          "type": [
+                            "array",
+                            "null"
+                          ],
+                          "description": "One entry per day: the cheapest single fare and a sample of departure times (UTC).",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "date": {
+                                "type": [
+                                  "string",
+                                  "null"
+                                ],
+                                "example": "2026-08-11"
+                              },
+                              "cheapest_price": {
+                                "type": [
+                                  "number",
+                                  "null"
+                                ],
+                                "example": 14
+                              },
+                              "currency": {
+                                "type": [
+                                  "string",
+                                  "null"
+                                ],
+                                "example": "GBP"
+                              },
+                              "departures": {
+                                "type": [
+                                  "array",
+                                  "null"
+                                ],
+                                "items": {
+                                  "type": "string",
+                                  "example": "2026-08-11T05:43:00.000Z"
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "cached": {
+                      "type": [
+                        "boolean",
+                        "null"
+                      ],
+                      "example": false
+                    },
+                    "source": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "example": "thetrainline:graphql"
+                    },
+                    "pagination": {
+                      "type": [
+                        "object",
+                        "null"
+                      ],
+                      "properties": {
+                        "total": {
+                          "type": [
+                            "integer",
+                            "null"
+                          ],
+                          "example": 3
+                        },
+                        "limit": {
+                          "type": [
+                            "integer",
+                            "null"
+                          ],
+                          "example": 50
+                        },
+                        "offset": {
+                          "type": [
+                            "integer",
+                            "null"
+                          ],
+                          "example": 0
+                        },
+                        "count": {
+                          "type": [
+                            "integer",
+                            "null"
+                          ],
+                          "example": 3
+                        },
+                        "has_more": {
+                          "type": [
+                            "boolean",
+                            "null"
+                          ],
+                          "example": false
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "402": {
+            "$ref": "#/components/responses/CreditLimitReached"
+          },
+          "403": {
+            "$ref": "#/components/responses/AccountSuspended"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "502": {
+            "$ref": "#/components/responses/UpstreamFailed"
+          }
+        }
+      }
+    },
+    "/locations": {
+      "get": {
+        "operationId": "locations",
+        "summary": "Initial release",
+        "description": "Search Trainline stations/locations by name; returns their codes for use with /fares.",
+        "x-credits": 1,
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": true,
+            "description": "Search term (station or place name)",
+            "schema": {
+              "type": "string"
+            },
+            "example": "london"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "description": "Max results to return",
+            "schema": {
+              "type": "integer",
+              "default": 50
+            },
+            "example": 10
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "description": "Results to skip (pagination)",
+            "schema": {
+              "type": "integer",
+              "default": 0
+            },
+            "example": 0
+          },
+          {
+            "name": "refresh",
+            "in": "query",
+            "required": false,
+            "description": "Bypass and repopulate the cache",
+            "schema": {
+              "type": "boolean",
+              "default": false
+            },
+            "example": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The data, as JSON.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": [
+                        "object",
+                        "null"
+                      ],
+                      "properties": {
+                        "query": {
+                          "type": [
+                            "string",
+                            "null"
+                          ],
+                          "example": "london"
+                        },
+                        "locations": {
+                          "type": [
+                            "array",
+                            "null"
+                          ],
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "name": {
+                                "type": [
+                                  "string",
+                                  "null"
+                                ],
+                                "example": "London"
+                              },
+                              "code": {
+                                "type": [
+                                  "string",
+                                  "null"
+                                ],
+                                "example": "urn:trainline:generic:loc:182gb"
+                              },
+                              "type": {
+                                "type": [
+                                  "string",
+                                  "null"
+                                ],
+                                "example": "stationGroup"
+                              },
+                              "country": {
+                                "type": [
+                                  "string",
+                                  "null"
+                                ],
+                                "example": "GB"
+                              },
+                              "subtitle": {
+                                "type": [
+                                  "string",
+                                  "null"
+                                ],
+                                "example": "Any"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "cached": {
+                      "type": [
+                        "boolean",
+                        "null"
+                      ],
+                      "example": false
+                    },
+                    "source": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "example": "thetrainline:locations-search"
+                    },
+                    "pagination": {
+                      "type": [
+                        "object",
+                        "null"
+                      ],
+                      "properties": {
+                        "total": {
+                          "type": [
+                            "integer",
+                            "null"
+                          ],
+                          "example": 10
+                        },
+                        "limit": {
+                          "type": [
+                            "integer",
+                            "null"
+                          ],
+                          "example": 50
+                        },
+                        "offset": {
+                          "type": [
+                            "integer",
+                            "null"
+                          ],
+                          "example": 0
+                        },
+                        "count": {
+                          "type": [
+                            "integer",
+                            "null"
+                          ],
+                          "example": 10
+                        },
+                        "has_more": {
+                          "type": [
+                            "boolean",
+                            "null"
+                          ],
+                          "example": false
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "402": {
+            "$ref": "#/components/responses/CreditLimitReached"
+          },
+          "403": {
+            "$ref": "#/components/responses/AccountSuspended"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "502": {
+            "$ref": "#/components/responses/UpstreamFailed"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "maviapiKey": {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "Your maviapi API key, sent as `Authorization: Bearer <key>`. Create one at https://maviapi.com/dashboard/keys."
+      }
+    },
+    "schemas": {
+      "Error": {
+        "type": "object",
+        "required": [
+          "error",
+          "message"
+        ],
+        "properties": {
+          "error": {
+            "type": "string",
+            "description": "Machine-readable code, e.g. `rate_limited`."
+          },
+          "message": {
+            "type": "string",
+            "description": "What went wrong, in a sentence."
+          }
+        }
+      }
+    },
+    "responses": {
+      "BadRequest": {
+        "description": "A parameter is missing or cannot be used.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "example": {
+              "error": "bad_request",
+              "message": "Missing required query parameter: q"
+            }
+          }
+        }
+      },
+      "Unauthorized": {
+        "description": "No API key was sent, or the key is invalid or revoked (`missing_api_key`, `invalid_api_key`).",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "example": {
+              "error": "missing_api_key",
+              "message": "Provide an API key via the Authorization: Bearer <key> header."
+            }
+          }
+        }
+      },
+      "CreditLimitReached": {
+        "description": "The plan's credits for this period are used up.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "example": {
+              "error": "credit_limit_reached",
+              "message": "You've used all 5,000 credits in your Trial plan for this period. Upgrade your plan for a higher allotment."
+            }
+          }
+        }
+      },
+      "AccountSuspended": {
+        "description": "The account that owns the key is suspended.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "example": {
+              "error": "account_banned",
+              "message": "Your account is suspended."
+            }
+          }
+        }
+      },
+      "RateLimited": {
+        "description": "Too many requests for this key. Wait the number of seconds in `Retry-After`.",
+        "headers": {
+          "Retry-After": {
+            "description": "Seconds to wait before retrying.",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "example": {
+              "error": "rate_limited",
+              "message": "Rate limit exceeded for this API key."
+            }
+          }
+        }
+      },
+      "UpstreamFailed": {
+        "description": "The source site could not be read this time. Retrying later usually works.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "example": {
+              "error": "scrape_failed",
+              "message": "The upstream source could not be fetched"
+            }
+          }
+        }
+      }
+    }
+  }
+}
