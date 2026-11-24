@@ -188,7 +188,7 @@ Parameters:
 
 - `from` (string, required): Origin: a place/station name (resolved to the best match) or a Trainline urn code. Example: `london`.
 - `to` (string, required): Destination: a place/station name or a Trainline urn code. Example: `manchester`.
-- `date` (string, optional): First day of the window (YYYY-MM-DD, UTC). Defaults to today. Example: `2026-08-11`.
+- `date` (string, optional): First day of the window (YYYY-MM-DD, UTC). Defaults to today. Example: `2026-12-24`.
 - `days` (integer, optional): Number of days from `date` to price (1-14). Example: `3`.
 - `currency` (string, optional): Fare currency. One of: `GBP`, `EUR`, `USD`, `CHF`, `DKK`, `SEK`, `NOK`. Example: `GBP`.
 - `limit` (integer, optional): Max days to return. Example: `50`.
