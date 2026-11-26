@@ -171,7 +171,7 @@ A request the API answers with an error status raises an `ApiError` (in Go, retu
 | 401 | `missing_api_key` | No API key was sent, or the key is invalid or revoked (`missing_api_key`, `invalid_api_key`). |
 | 402 | `credit_limit_reached` | The plan's credits for this period are used up. |
 | 403 | `account_banned` | The account that owns the key is suspended. |
-| 429 | `rate_limited` | Too many requests for this key. Wait the number of seconds in `Retry-After`. |
+| 429 | `rate_limited` | Too many requests for this key (`rate_limited`), or too many at once for its plan (`concurrency_limited`). Wait the number of seconds in `Retry-After`. |
 | 502 | `scrape_failed` | The source site could not be read this time. Retrying later usually works. |
 
 ## Endpoint reference
@@ -188,7 +188,7 @@ Parameters:
 
 - `from` (string, required): Origin: a place/station name (resolved to the best match) or a Trainline urn code. Example: `london`.
 - `to` (string, required): Destination: a place/station name or a Trainline urn code. Example: `manchester`.
-- `date` (string, optional): First day of the window (YYYY-MM-DD, UTC). Defaults to today. Example: `2026-12-25`.
+- `date` (string, optional): First day of the window (YYYY-MM-DD, UTC). Defaults to today. Example: `2026-12-26`.
 - `days` (integer, optional): Number of days from `date` to price (1-14). Example: `3`.
 - `currency` (string, optional): Fare currency. One of: `GBP`, `EUR`, `USD`, `CHF`, `DKK`, `SEK`, `NOK`. Example: `GBP`.
 - `limit` (integer, optional): Max days to return. Example: `50`.
@@ -291,7 +291,7 @@ Parameters:
 - [maviapi MCP server](https://maviapi.com/docs#mcp): the same API as tools for Claude, Cursor and other AI agents.
 - [All maviapi APIs](https://maviapi.com/apis?utm_source=github&utm_medium=readme&utm_campaign=sdk-thetrainline). Need a website that is not there? [Ask for it](https://maviapi.com/?utm_source=github&utm_medium=readme&utm_campaign=sdk-thetrainline) and get an API for it.
 
-Other unofficial SDKs: [Airbnb](https://github.com/maviapi-sdks/airbnb-unofficial-sdk) · [Booking.com](https://github.com/maviapi-sdks/booking-unofficial-sdk) · [GetYourGuide](https://github.com/maviapi-sdks/getyourguide-unofficial-sdk) · [Kiwi.com](https://github.com/maviapi-sdks/kiwi-unofficial-sdk) · [MarineTraffic](https://github.com/maviapi-sdks/marinetraffic-unofficial-sdk) · [Speedtest](https://github.com/maviapi-sdks/speedtest-unofficial-sdk) · [Trendyol](https://github.com/maviapi-sdks/trendyol-unofficial-sdk) · [Tripadvisor](https://github.com/maviapi-sdks/tripadvisor-unofficial-sdk) · [Yemeksepeti](https://github.com/maviapi-sdks/yemeksepeti-unofficial-sdk)
+Other unofficial SDKs: [Airbnb](https://github.com/maviapi-sdks/airbnb-unofficial-sdk) · [Booking.com](https://github.com/maviapi-sdks/booking-unofficial-sdk) · [GetYourGuide](https://github.com/maviapi-sdks/getyourguide-unofficial-sdk) · [Google Search](https://github.com/maviapi-sdks/google-search-unofficial-sdk) · [Kiwi.com](https://github.com/maviapi-sdks/kiwi-unofficial-sdk) · [MarineTraffic](https://github.com/maviapi-sdks/marinetraffic-unofficial-sdk) · [Speedtest](https://github.com/maviapi-sdks/speedtest-unofficial-sdk) · [Trendyol](https://github.com/maviapi-sdks/trendyol-unofficial-sdk) · [Tripadvisor](https://github.com/maviapi-sdks/tripadvisor-unofficial-sdk) · [Yemeksepeti](https://github.com/maviapi-sdks/yemeksepeti-unofficial-sdk)
 
 ## License
 
