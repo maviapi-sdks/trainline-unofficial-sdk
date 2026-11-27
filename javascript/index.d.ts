@@ -18,86 +18,98 @@ export declare class ApiError extends Error {
 
 export interface FaresParams {
   /**
-   * Origin: a place/station name (resolved to the best match) or a Trainline urn code
+   * origin, a place or station name (best match is used, as in /locations) or a
+   * Trainline urn code
    */
-  "from": string;
+  "from"?: string;
   /**
-   * Destination: a place/station name or a Trainline urn code
+   * destination, a place or station name or a Trainline urn code
    */
-  "to": string;
+  "to"?: string;
   /**
-   * First day of the window (YYYY-MM-DD, UTC). Defaults to today
+   * first day of the window, YYYY-MM-DD (UTC); defaults to today
    */
   "date"?: string;
   /**
-   * Number of days from `date` to price (1-14)
+   * number of days to price starting at `date`, 1-14
    */
   "days"?: number;
   /**
-   * Fare currency. One of: GBP, EUR, USD, CHF, DKK, SEK, NOK
+   * currency of the fares (GBP, EUR, USD, CHF, DKK, SEK or NOK). One of: GBP, EUR, USD,
+   * CHF, DKK, SEK, NOK
    */
   "currency"?: string;
   /**
-   * Max days to return
+   * Rows in one page, 1 to 200 (default 50)
    */
   "limit"?: number;
   /**
-   * Days to skip (pagination)
+   * Rows to skip before the page starts (default 0)
    */
   "offset"?: number;
-  /**
-   * Bypass and repopulate the cache
-   */
-  "refresh"?: boolean;
+  undefined?: string;
+  undefined?: string;
+  undefined?: string;
 }
 
 export interface LocationsParams {
   /**
-   * Search term (station or place name)
+   * search term, a station or place name (e.g. "london", "paris nord")
    */
-  "q": string;
+  "q"?: string;
   /**
-   * Max results to return
+   * Rows in one page, 1 to 200 (default 50)
    */
   "limit"?: number;
   /**
-   * Results to skip (pagination)
+   * Rows to skip before the page starts (default 0)
    */
   "offset"?: number;
-  /**
-   * Bypass and repopulate the cache
-   */
-  "refresh"?: boolean;
+  undefined?: string;
+  undefined?: string;
+  undefined?: string;
 }
 
 export declare class TrainlineClient {
   constructor(options?: ClientOptions);
   request(path: string, params?: Record<string, unknown>, required?: string[]): Promise<Record<string, any>>;
   /**
-   * Cheapest single fares and departure times between two stations, by day. Resolves
-   * free-text place names to Trainline stations, then prices the route.
+   * The fare window between two places: origin, destination, the window's dates, its
+   * cheapest day and price, and `days`, the list of priced days in date order, each with
+   * its cheapest single (one-way) fare and the departure times of the cheapest trains.
+   * Days Trainline holds no fare data for may be missing or come back with date and
+   * cheapest_price null.
+   *
+   * Each successful request uses 5 credits.
    *
    * Parameters:
-   *   from (string, required): Origin: a place/station name (resolved to the best
-   *     match) or a Trainline urn code
-   *   to (string, required): Destination: a place/station name or a Trainline urn code
-   *   date (string): First day of the window (YYYY-MM-DD, UTC). Defaults to today
-   *   days (integer): Number of days from `date` to price (1-14)
-   *   currency (string): Fare currency. One of: GBP, EUR, USD, CHF, DKK, SEK, NOK
-   *   limit (integer): Max days to return
-   *   offset (integer): Days to skip (pagination)
-   *   refresh (boolean): Bypass and repopulate the cache
+   *   from (string): origin, a place or station name (best match is used, as in
+   *     /locations) or a Trainline urn code
+   *   to (string): destination, a place or station name or a Trainline urn code
+   *   date (string): first day of the window, YYYY-MM-DD (UTC); defaults to today
+   *   days (integer): number of days to price starting at `date`, 1-14
+   *   currency (string): currency of the fares (GBP, EUR, USD, CHF, DKK, SEK or NOK).
+   *     One of: GBP, EUR, USD, CHF, DKK, SEK, NOK
+   *   limit (integer): Rows in one page, 1 to 200 (default 50)
+   *   offset (integer): Rows to skip before the page starts (default 0)
+   *   undefined (string)
+   *   undefined (string)
+   *   undefined (string)
    */
-  fares(params: FaresParams): Promise<Record<string, any>>;
+  fares(params?: FaresParams): Promise<Record<string, any>>;
   /**
-   * Search Trainline stations/locations by name; returns their codes for use with
-   * /fares.
+   * Trainline stations and places matching a name, best match first, with the urn codes
+   * that /fares accepts.
+   *
+   * Each successful request uses 5 credits.
    *
    * Parameters:
-   *   q (string, required): Search term (station or place name)
-   *   limit (integer): Max results to return
-   *   offset (integer): Results to skip (pagination)
-   *   refresh (boolean): Bypass and repopulate the cache
+   *   q (string): search term, a station or place name (e.g. "london", "paris nord")
+   *   limit (integer): Rows in one page, 1 to 200 (default 50)
+   *   offset (integer): Rows to skip before the page starts (default 0)
+   *   undefined (string)
+   *   undefined (string)
+   *   undefined (string)
    */
-  locations(params: LocationsParams): Promise<Record<string, any>>;
+  locations(params?: LocationsParams): Promise<Record<string, any>>;
 }

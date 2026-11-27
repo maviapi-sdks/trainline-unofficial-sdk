@@ -152,8 +152,8 @@ Console.WriteLine(result);
 
 | Endpoint | What it returns | Credits per call |
 |---|---|---|
-| [`GET /fares`](#get-fares) | Cheapest single fares and departure times between two stations, by day. | 1 |
-| [`GET /locations`](#get-locations) | Search Trainline stations/locations by name; returns their codes for use with /fares. | 1 |
+| [`GET /fares`](#get-fares) | The fare window between two places: origin, destination, the window's dates, its cheapest day and price, and `days`, the list of priced days in date order, each with its cheapest single (one-way) fare and the departure times of the cheapest trains. | 5 |
+| [`GET /locations`](#get-locations) | Trainline stations and places matching a name, best match first, with the urn codes that /fares accepts. | 5 |
 
 Try each one in the browser on the [Trainline API page](https://maviapi.com/apis/thetrainline?utm_source=github&utm_medium=readme&utm_campaign=sdk-thetrainline).
 
@@ -167,33 +167,38 @@ A request the API answers with an error status raises an `ApiError` (in Go, retu
 
 | Status | Code | Meaning |
 |---|---|---|
-| 400 | `bad_request` | A parameter is missing or cannot be used. |
+| 400 | `bad_request` | A parameter is missing or cannot be used (`bad_request`), or, with the `x-maviapi-strict: 1` request header, a query param the operation does not take was sent (`unknown_param`, with the names in `params`). |
 | 401 | `missing_api_key` | No API key was sent, or the key is invalid or revoked (`missing_api_key`, `invalid_api_key`). |
 | 402 | `credit_limit_reached` | The plan's credits for this period are used up. |
 | 403 | `account_banned` | The account that owns the key is suspended. |
+| 410 | `cursor_expired` | The stored copy of the list this cursor walks is gone. Start the list again without cursor. |
 | 429 | `rate_limited` | Too many requests for this key (`rate_limited`), or too many at once for its plan (`concurrency_limited`). Wait the number of seconds in `Retry-After`. |
 | 502 | `scrape_failed` | The source site could not be read this time. Retrying later usually works. |
 
 ## Endpoint reference
 
-Base URL: `https://api.maviapi.com/v1/sites/thetrainline`. API version 2026-11-14. The same contract is in [`openapi.json`](openapi.json).
+Base URL: `https://api.maviapi.com/v1/sites/thetrainline`. API version 2026-11-27. The same contract is in [`openapi.json`](openapi.json).
 
 ### `GET /fares`
 
-Cheapest single fares and departure times between two stations, by day. Resolves free-text place names to Trainline stations, then prices the route.
+The fare window between two places: origin, destination, the window's dates, its cheapest day and price, and `days`, the list of priced days in date order, each with its cheapest single (one-way) fare and the departure times of the cheapest trains. Days Trainline holds no fare data for may be missing or come back with date and cheapest_price null.
+
+Each successful request uses 5 credits.
 
 Methods: `fares` (Python, JavaScript/TypeScript, PHP, Ruby, Java) · `Fares` (Go) · `FaresAsync` (C#)
 
 Parameters:
 
-- `from` (string, required): Origin: a place/station name (resolved to the best match) or a Trainline urn code. Example: `london`.
-- `to` (string, required): Destination: a place/station name or a Trainline urn code. Example: `manchester`.
-- `date` (string, optional): First day of the window (YYYY-MM-DD, UTC). Defaults to today. Example: `2026-12-26`.
-- `days` (integer, optional): Number of days from `date` to price (1-14). Example: `3`.
-- `currency` (string, optional): Fare currency. One of: `GBP`, `EUR`, `USD`, `CHF`, `DKK`, `SEK`, `NOK`. Example: `GBP`.
-- `limit` (integer, optional): Max days to return. Example: `50`.
-- `offset` (integer, optional): Days to skip (pagination). Example: `0`.
-- `refresh` (boolean, optional): Bypass and repopulate the cache. Example: `false`.
+- `from` (string, optional): origin, a place or station name (best match is used, as in /locations) or a Trainline urn code. Example: `london`.
+- `to` (string, optional): destination, a place or station name or a Trainline urn code. Example: `manchester`.
+- `date` (string, optional): first day of the window, YYYY-MM-DD (UTC); defaults to today.
+- `days` (integer, optional): number of days to price starting at `date`, 1-14. Example: `3`.
+- `currency` (string, optional): currency of the fares (GBP, EUR, USD, CHF, DKK, SEK or NOK). One of: `GBP`, `EUR`, `USD`, `CHF`, `DKK`, `SEK`, `NOK`. Example: `GBP`.
+- `limit` (integer, optional): Rows in one page, 1 to 200 (default 50).
+- `offset` (integer, optional): Rows to skip before the page starts (default 0).
+- `undefined` (string, optional)
+- `undefined` (string, optional)
+- `undefined` (string, optional)
 
 <details>
 <summary>Example response</summary>
@@ -211,30 +216,40 @@ Parameters:
     },
     "currency": "GBP",
     "journey_type": "single",
-    "date_from": "2026-08-11",
-    "date_to": "2026-08-13",
-    "cheapest_price": 14,
-    "cheapest_date": "2026-08-11",
+    "date_from": "2026-11-27",
+    "date_to": "2026-11-29",
+    "cheapest_price": 21.9,
+    "cheapest_date": "2026-11-28",
     "days": [
       {
-        "date": "2026-08-11",
-        "cheapest_price": 14,
+        "date": "2026-11-27",
+        "cheapest_price": 36,
         "currency": "GBP",
         "departures": [
-          "2026-08-11T05:43:00.000Z"
+          "2026-11-27T19:46:00.000Z"
         ]
       }
-    ]
+    ],
+    "pagination": {
+      "count": 3,
+      "has_more": false,
+      "next_cursor": null
+    },
+    "fetched_at": "2026-11-27T10:16:44.709Z",
+    "age": 0
   },
-  "cached": false,
-  "source": "thetrainline:graphql",
+  "cached": null,
+  "source": null,
   "pagination": {
-    "total": 3,
-    "limit": 50,
-    "offset": 0,
-    "count": 3,
-    "has_more": false
-  }
+    "total": null,
+    "limit": null,
+    "offset": null,
+    "count": null,
+    "has_more": null,
+    "next_cursor": null
+  },
+  "fetched_at": null,
+  "age": null
 }
 ```
 
@@ -242,16 +257,20 @@ Parameters:
 
 ### `GET /locations`
 
-Search Trainline stations/locations by name; returns their codes for use with /fares.
+Trainline stations and places matching a name, best match first, with the urn codes that /fares accepts.
+
+Each successful request uses 5 credits.
 
 Methods: `locations` (Python, JavaScript/TypeScript, PHP, Ruby, Java) · `Locations` (Go) · `LocationsAsync` (C#)
 
 Parameters:
 
-- `q` (string, required): Search term (station or place name). Example: `london`.
-- `limit` (integer, optional): Max results to return. Example: `10`.
-- `offset` (integer, optional): Results to skip (pagination). Example: `0`.
-- `refresh` (boolean, optional): Bypass and repopulate the cache. Example: `false`.
+- `q` (string, optional): search term, a station or place name (e.g. "london", "paris nord"). Example: `london`.
+- `limit` (integer, optional): Rows in one page, 1 to 200 (default 50).
+- `offset` (integer, optional): Rows to skip before the page starts (default 0).
+- `undefined` (string, optional)
+- `undefined` (string, optional)
+- `undefined` (string, optional)
 
 <details>
 <summary>Example response</summary>
@@ -268,17 +287,27 @@ Parameters:
         "country": "GB",
         "subtitle": "Any"
       }
-    ]
+    ],
+    "pagination": {
+      "count": 30,
+      "has_more": false,
+      "next_cursor": null
+    },
+    "fetched_at": "2026-11-27T10:15:54.995Z",
+    "age": 0
   },
-  "cached": false,
-  "source": "thetrainline:locations-search",
+  "cached": null,
+  "source": null,
   "pagination": {
-    "total": 10,
-    "limit": 50,
-    "offset": 0,
-    "count": 10,
-    "has_more": false
-  }
+    "total": null,
+    "limit": null,
+    "offset": null,
+    "count": null,
+    "has_more": null,
+    "next_cursor": null
+  },
+  "fetched_at": null,
+  "age": null
 }
 ```
 
@@ -291,7 +320,7 @@ Parameters:
 - [maviapi MCP server](https://maviapi.com/docs#mcp): the same API as tools for Claude, Cursor and other AI agents.
 - [All maviapi APIs](https://maviapi.com/apis?utm_source=github&utm_medium=readme&utm_campaign=sdk-thetrainline). Need a website that is not there? [Ask for it](https://maviapi.com/?utm_source=github&utm_medium=readme&utm_campaign=sdk-thetrainline) and get an API for it.
 
-Other unofficial SDKs: [Airbnb](https://github.com/maviapi-sdks/airbnb-unofficial-sdk) · [Booking.com](https://github.com/maviapi-sdks/booking-unofficial-sdk) · [GetYourGuide](https://github.com/maviapi-sdks/getyourguide-unofficial-sdk) · [Google Search](https://github.com/maviapi-sdks/google-search-unofficial-sdk) · [Kiwi.com](https://github.com/maviapi-sdks/kiwi-unofficial-sdk) · [MarineTraffic](https://github.com/maviapi-sdks/marinetraffic-unofficial-sdk) · [Speedtest](https://github.com/maviapi-sdks/speedtest-unofficial-sdk) · [Trendyol](https://github.com/maviapi-sdks/trendyol-unofficial-sdk) · [Tripadvisor](https://github.com/maviapi-sdks/tripadvisor-unofficial-sdk) · [Yemeksepeti](https://github.com/maviapi-sdks/yemeksepeti-unofficial-sdk)
+Other unofficial SDKs: [Airbnb](https://github.com/maviapi-sdks/airbnb-unofficial-sdk) · [Booking.com](https://github.com/maviapi-sdks/booking-unofficial-sdk) · [FlightList](https://github.com/maviapi-sdks/flightlist-unofficial-sdk) · [GetYourGuide](https://github.com/maviapi-sdks/getyourguide-unofficial-sdk) · [Google Search](https://github.com/maviapi-sdks/google-search-unofficial-sdk) · [Kiwi.com](https://github.com/maviapi-sdks/kiwi-unofficial-sdk) · [MarineTraffic](https://github.com/maviapi-sdks/marinetraffic-unofficial-sdk) · [Speedtest](https://github.com/maviapi-sdks/speedtest-unofficial-sdk) · [Trendyol](https://github.com/maviapi-sdks/trendyol-unofficial-sdk) · [Tripadvisor](https://github.com/maviapi-sdks/tripadvisor-unofficial-sdk) · [Yemeksepeti](https://github.com/maviapi-sdks/yemeksepeti-unofficial-sdk)
 
 ## License
 

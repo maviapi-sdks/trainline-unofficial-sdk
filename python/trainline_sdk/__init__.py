@@ -49,36 +49,48 @@ class TrainlineClient:
         self.base_url = root.rstrip("/") + "/v1/sites/thetrainline"
         self.timeout = timeout
 
-    def fares(self, *, from_: str, to: str, date: Optional[str] = None, days: Optional[int] = None, currency: Optional[str] = None, limit: Optional[int] = None, offset: Optional[int] = None, refresh: Optional[bool] = None) -> Dict[str, Any]:
+    def fares(self, *, from_: Optional[str] = None, to: Optional[str] = None, date: Optional[str] = None, days: Optional[int] = None, currency: Optional[str] = None, limit: Optional[int] = None, offset: Optional[int] = None, undefined: Optional[str] = None, undefined: Optional[str] = None, undefined: Optional[str] = None) -> Dict[str, Any]:
         """
-        Cheapest single fares and departure times between two stations, by day. Resolves
-        free-text place names to Trainline stations, then prices the route.
+        The fare window between two places: origin, destination, the window's dates, its
+        cheapest day and price, and `days`, the list of priced days in date order, each with
+        its cheapest single (one-way) fare and the departure times of the cheapest trains.
+        Days Trainline holds no fare data for may be missing or come back with date and
+        cheapest_price null.
+
+        Each successful request uses 5 credits.
 
         Parameters:
-          from_ (string, required): Origin: a place/station name (resolved to the best
-            match) or a Trainline urn code
-          to (string, required): Destination: a place/station name or a Trainline urn code
-          date (string): First day of the window (YYYY-MM-DD, UTC). Defaults to today
-          days (integer): Number of days from `date` to price (1-14)
-          currency (string): Fare currency. One of: GBP, EUR, USD, CHF, DKK, SEK, NOK
-          limit (integer): Max days to return
-          offset (integer): Days to skip (pagination)
-          refresh (boolean): Bypass and repopulate the cache
+          from_ (string): origin, a place or station name (best match is used, as in
+            /locations) or a Trainline urn code
+          to (string): destination, a place or station name or a Trainline urn code
+          date (string): first day of the window, YYYY-MM-DD (UTC); defaults to today
+          days (integer): number of days to price starting at `date`, 1-14
+          currency (string): currency of the fares (GBP, EUR, USD, CHF, DKK, SEK or NOK).
+            One of: GBP, EUR, USD, CHF, DKK, SEK, NOK
+          limit (integer): Rows in one page, 1 to 200 (default 50)
+          offset (integer): Rows to skip before the page starts (default 0)
+          undefined (string)
+          undefined (string)
+          undefined (string)
         """
-        return self._get("/fares", {"from": from_, "to": to, "date": date, "days": days, "currency": currency, "limit": limit, "offset": offset, "refresh": refresh})
+        return self._get("/fares", {"from": from_, "to": to, "date": date, "days": days, "currency": currency, "limit": limit, "offset": offset, undefined: undefined, undefined: undefined, undefined: undefined})
 
-    def locations(self, *, q: str, limit: Optional[int] = None, offset: Optional[int] = None, refresh: Optional[bool] = None) -> Dict[str, Any]:
+    def locations(self, *, q: Optional[str] = None, limit: Optional[int] = None, offset: Optional[int] = None, undefined: Optional[str] = None, undefined: Optional[str] = None, undefined: Optional[str] = None) -> Dict[str, Any]:
         """
-        Search Trainline stations/locations by name; returns their codes for use with
-        /fares.
+        Trainline stations and places matching a name, best match first, with the urn codes
+        that /fares accepts.
+
+        Each successful request uses 5 credits.
 
         Parameters:
-          q (string, required): Search term (station or place name)
-          limit (integer): Max results to return
-          offset (integer): Results to skip (pagination)
-          refresh (boolean): Bypass and repopulate the cache
+          q (string): search term, a station or place name (e.g. "london", "paris nord")
+          limit (integer): Rows in one page, 1 to 200 (default 50)
+          offset (integer): Rows to skip before the page starts (default 0)
+          undefined (string)
+          undefined (string)
+          undefined (string)
         """
-        return self._get("/locations", {"q": q, "limit": limit, "offset": offset, "refresh": refresh})
+        return self._get("/locations", {"q": q, "limit": limit, "offset": offset, undefined: undefined, undefined: undefined, undefined: undefined})
 
     def _get(self, path: str, params: Dict[str, Any]) -> Dict[str, Any]:
         query = {}

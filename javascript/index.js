@@ -29,19 +29,26 @@ export class TrainlineClient {
   }
 
   /**
-   * Cheapest single fares and departure times between two stations, by day. Resolves
-   * free-text place names to Trainline stations, then prices the route.
+   * The fare window between two places: origin, destination, the window's dates, its
+   * cheapest day and price, and `days`, the list of priced days in date order, each with
+   * its cheapest single (one-way) fare and the departure times of the cheapest trains.
+   * Days Trainline holds no fare data for may be missing or come back with date and
+   * cheapest_price null.
+   *
+   * Each successful request uses 5 credits.
    */
-  fares(params) {
-    return this.request("/fares", params, ["from", "to"]);
+  fares(params = {}) {
+    return this.request("/fares", params, []);
   }
 
   /**
-   * Search Trainline stations/locations by name; returns their codes for use with
-   * /fares.
+   * Trainline stations and places matching a name, best match first, with the urn codes
+   * that /fares accepts.
+   *
+   * Each successful request uses 5 credits.
    */
-  locations(params) {
-    return this.request("/locations", params, ["q"]);
+  locations(params = {}) {
+    return this.request("/locations", params, []);
   }
 
   /** GET one endpoint path. Parameters named in the path go there, the rest in the query. */

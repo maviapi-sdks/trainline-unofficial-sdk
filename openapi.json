@@ -2,8 +2,8 @@
   "openapi": "3.1.0",
   "info": {
     "title": "Trainline API",
-    "version": "2026-11-14",
-    "description": "Train ticket fares and departure times between any two stations on Trainline (thetrainline.com).\n\nEvery request needs an API key in the `Authorization: Bearer <key>` header. Create one at https://maviapi.com/dashboard/keys. A successful request uses one credit, unless its operation says more (`x-credits`). That price covers 200 rows (or the operation's `x-credits-rows`); a request that returns more pays it again for each further page of that many rows. The `x-maviapi-credits` response header says what a request cost.\n\nEndpoint reference with live examples: https://maviapi.com/apis/thetrainline",
+    "version": "2026-11-27",
+    "description": "Train ticket fares and departure times between any two stations on Trainline (thetrainline.com).\n\nEvery request needs an API key in the `Authorization: Bearer <key>` header. Create one at https://maviapi.com/dashboard/keys. A successful request uses one credit, unless its operation says more (`x-credits`). That price covers 200 rows (or the operation's `x-credits-rows`); a request that returns more pays it again for each further page of that many rows. The `x-maviapi-credits` response header says what a request cost. A query param an operation does not take is ignored and named in the `x-maviapi-unknown-params` response header; send the `x-maviapi-strict: 1` request header to have such a request refused with a free `400 unknown_param` instead.\n\nEndpoint reference with live examples: https://maviapi.com/apis/thetrainline",
     "termsOfService": "https://maviapi.com/terms"
   },
   "externalDocs": {
@@ -24,27 +24,29 @@
     "/fares": {
       "get": {
         "operationId": "fares",
-        "summary": "Initial release",
-        "description": "Cheapest single fares and departure times between two stations, by day. Resolves free-text place names to Trainline stations, then prices the route.",
-        "x-credits": 1,
+        "summary": "Fares",
+        "description": "The fare window between two places: origin, destination, the window's dates, its cheapest day and price, and `days`, the list of priced days in date order, each with its cheapest single (one-way) fare and the departure times of the cheapest trains. Days Trainline holds no fare data for may be missing or come back with date and cheapest_price null.\n\nEach successful request uses 5 credits.",
+        "x-credits": 5,
         "parameters": [
           {
             "name": "from",
             "in": "query",
-            "required": true,
-            "description": "Origin: a place/station name (resolved to the best match) or a Trainline urn code",
+            "required": false,
+            "description": "origin, a place or station name (best match is used, as in /locations) or a Trainline urn code",
             "schema": {
-              "type": "string"
+              "type": "string",
+              "default": "london"
             },
             "example": "london"
           },
           {
             "name": "to",
             "in": "query",
-            "required": true,
-            "description": "Destination: a place/station name or a Trainline urn code",
+            "required": false,
+            "description": "destination, a place or station name or a Trainline urn code",
             "schema": {
-              "type": "string"
+              "type": "string",
+              "default": "manchester"
             },
             "example": "manchester"
           },
@@ -52,22 +54,19 @@
             "name": "date",
             "in": "query",
             "required": false,
-            "description": "First day of the window (YYYY-MM-DD, UTC). Defaults to today.",
+            "description": "first day of the window, YYYY-MM-DD (UTC); defaults to today",
             "schema": {
               "type": "string"
-            },
-            "example": "2026-12-26"
+            }
           },
           {
             "name": "days",
             "in": "query",
             "required": false,
-            "description": "Number of days from `date` to price (1-14)",
+            "description": "number of days to price starting at `date`, 1-14",
             "schema": {
               "type": "integer",
-              "default": 3,
-              "minimum": 1,
-              "maximum": 14
+              "default": 3
             },
             "example": 3
           },
@@ -75,9 +74,8 @@
             "name": "currency",
             "in": "query",
             "required": false,
-            "description": "Fare currency",
+            "description": "currency of the fares (GBP, EUR, USD, CHF, DKK, SEK or NOK)",
             "schema": {
-              "type": "string",
               "enum": [
                 "GBP",
                 "EUR",
@@ -87,6 +85,7 @@
                 "SEK",
                 "NOK"
               ],
+              "type": "string",
               "default": "GBP"
             },
             "example": "GBP"
@@ -95,34 +94,33 @@
             "name": "limit",
             "in": "query",
             "required": false,
-            "description": "Max days to return",
+            "description": "Rows in one page, 1 to 200 (default 50).",
             "schema": {
               "type": "integer",
+              "minimum": 1,
+              "maximum": 200,
               "default": 50
-            },
-            "example": 50
+            }
           },
           {
             "name": "offset",
             "in": "query",
             "required": false,
-            "description": "Days to skip (pagination)",
+            "description": "Rows to skip before the page starts (default 0).",
             "schema": {
               "type": "integer",
+              "minimum": 0,
               "default": 0
-            },
-            "example": 0
+            }
           },
           {
-            "name": "refresh",
-            "in": "query",
-            "required": false,
-            "description": "Bypass and repopulate the cache",
-            "schema": {
-              "type": "boolean",
-              "default": false
-            },
-            "example": false
+            "$ref": "#/components/parameters/Fields"
+          },
+          {
+            "$ref": "#/components/parameters/Cursor"
+          },
+          {
+            "$ref": "#/components/parameters/MaxAge"
           }
         ],
         "responses": {
@@ -146,6 +144,25 @@
                 "schema": {
                   "type": "integer"
                 }
+              },
+              "x-maviapi-unknown-params": {
+                "description": "Query params this endpoint does not take, comma separated; they were ignored. Send `x-maviapi-strict: 1` to get a free `400 unknown_param` instead.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Age": {
+                "description": "Seconds since the data was read from the site, as the body's `age`.",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "x-maviapi-fetched-at": {
+                "description": "When the data was read from the site (ISO 8601, UTC), as the body's `fetched_at`.",
+                "schema": {
+                  "type": "string",
+                  "format": "date-time"
+                }
               }
             },
             "content": {
@@ -154,10 +171,7 @@
                   "type": "object",
                   "properties": {
                     "data": {
-                      "type": [
-                        "object",
-                        "null"
-                      ],
+                      "type": "object",
                       "properties": {
                         "origin": {
                           "type": [
@@ -222,36 +236,34 @@
                             "string",
                             "null"
                           ],
-                          "example": "2026-08-11"
+                          "example": "2026-11-27"
                         },
                         "date_to": {
                           "type": [
                             "string",
                             "null"
                           ],
-                          "example": "2026-08-13"
+                          "example": "2026-11-29"
                         },
                         "cheapest_price": {
                           "type": [
                             "number",
                             "null"
                           ],
-                          "description": "Cheapest single fare across the window",
-                          "example": 14
+                          "example": 21.9
                         },
                         "cheapest_date": {
                           "type": [
                             "string",
                             "null"
                           ],
-                          "example": "2026-08-11"
+                          "example": "2026-11-28"
                         },
                         "days": {
                           "type": [
                             "array",
                             "null"
                           ],
-                          "description": "One entry per day: the cheapest single fare and a sample of departure times (UTC).",
                           "items": {
                             "type": "object",
                             "properties": {
@@ -260,14 +272,14 @@
                                   "string",
                                   "null"
                                 ],
-                                "example": "2026-08-11"
+                                "example": "2026-11-27"
                               },
                               "cheapest_price": {
                                 "type": [
-                                  "number",
+                                  "integer",
                                   "null"
                                 ],
-                                "example": 14
+                                "example": 36
                               },
                               "currency": {
                                 "type": [
@@ -283,72 +295,96 @@
                                 ],
                                 "items": {
                                   "type": "string",
-                                  "example": "2026-08-11T05:43:00.000Z"
+                                  "example": "2026-11-27T19:46:00.000Z"
                                 }
                               }
                             }
                           }
-                        }
-                      }
-                    },
-                    "cached": {
-                      "type": [
-                        "boolean",
-                        "null"
-                      ],
-                      "example": false
-                    },
-                    "source": {
-                      "type": [
-                        "string",
-                        "null"
-                      ],
-                      "example": "thetrainline:graphql"
-                    },
-                    "pagination": {
-                      "type": [
-                        "object",
-                        "null"
-                      ],
-                      "properties": {
-                        "total": {
+                        },
+                        "pagination": {
                           "type": [
-                            "integer",
+                            "object",
                             "null"
                           ],
-                          "example": 3
+                          "properties": {
+                            "count": {
+                              "type": [
+                                "integer",
+                                "null"
+                              ],
+                              "example": 3
+                            },
+                            "has_more": {
+                              "type": [
+                                "boolean",
+                                "null"
+                              ],
+                              "example": false
+                            },
+                            "next_cursor": {
+                              "type": "null",
+                              "example": null
+                            }
+                          }
                         },
-                        "limit": {
+                        "fetched_at": {
                           "type": [
-                            "integer",
+                            "string",
                             "null"
                           ],
-                          "example": 50
+                          "example": "2026-11-27T10:16:44.709Z"
                         },
-                        "offset": {
+                        "age": {
                           "type": [
                             "integer",
                             "null"
                           ],
                           "example": 0
-                        },
-                        "count": {
-                          "type": [
-                            "integer",
-                            "null"
-                          ],
-                          "example": 3
-                        },
-                        "has_more": {
-                          "type": [
-                            "boolean",
-                            "null"
-                          ],
-                          "example": false
                         }
                       }
+                    },
+                    "cached": {
+                      "type": "boolean",
+                      "description": "Whether this answer was served from the stored copy."
+                    },
+                    "source": {
+                      "description": "Where the data was read from."
+                    },
+                    "pagination": {
+                      "type": "object",
+                      "properties": {
+                        "total": {
+                          "type": "integer"
+                        },
+                        "limit": {
+                          "type": "integer"
+                        },
+                        "offset": {
+                          "type": "integer"
+                        },
+                        "count": {
+                          "type": "integer"
+                        },
+                        "has_more": {
+                          "type": "boolean"
+                        },
+                        "next_cursor": {
+                          "$ref": "#/components/schemas/NextCursor"
+                        }
+                      }
+                    },
+                    "fetched_at": {
+                      "$ref": "#/components/schemas/FetchedAt"
+                    },
+                    "age": {
+                      "$ref": "#/components/schemas/Age"
                     }
-                  }
+                  },
+                  "required": [
+                    "data",
+                    "cached",
+                    "source"
+                  ]
                 }
               }
             }
@@ -365,6 +401,9 @@
           "403": {
             "$ref": "#/components/responses/AccountSuspended"
           },
+          "410": {
+            "$ref": "#/components/responses/CursorExpired"
+          },
           "429": {
             "$ref": "#/components/responses/RateLimited"
           },
@@ -377,17 +416,18 @@
     "/locations": {
       "get": {
         "operationId": "locations",
-        "summary": "Initial release",
-        "description": "Search Trainline stations/locations by name; returns their codes for use with /fares.",
-        "x-credits": 1,
+        "summary": "Locations",
+        "description": "Trainline stations and places matching a name, best match first, with the urn codes that /fares accepts.\n\nEach successful request uses 5 credits.",
+        "x-credits": 5,
         "parameters": [
           {
             "name": "q",
             "in": "query",
-            "required": true,
-            "description": "Search term (station or place name)",
+            "required": false,
+            "description": "search term, a station or place name (e.g. \"london\", \"paris nord\")",
             "schema": {
-              "type": "string"
+              "type": "string",
+              "default": "london"
             },
             "example": "london"
           },
@@ -395,34 +435,33 @@
             "name": "limit",
             "in": "query",
             "required": false,
-            "description": "Max results to return",
+            "description": "Rows in one page, 1 to 200 (default 50).",
             "schema": {
               "type": "integer",
+              "minimum": 1,
+              "maximum": 200,
               "default": 50
-            },
-            "example": 10
+            }
           },
           {
             "name": "offset",
             "in": "query",
             "required": false,
-            "description": "Results to skip (pagination)",
+            "description": "Rows to skip before the page starts (default 0).",
             "schema": {
               "type": "integer",
+              "minimum": 0,
               "default": 0
-            },
-            "example": 0
+            }
           },
           {
-            "name": "refresh",
-            "in": "query",
-            "required": false,
-            "description": "Bypass and repopulate the cache",
-            "schema": {
-              "type": "boolean",
-              "default": false
-            },
-            "example": false
+            "$ref": "#/components/parameters/Fields"
+          },
+          {
+            "$ref": "#/components/parameters/Cursor"
+          },
+          {
+            "$ref": "#/components/parameters/MaxAge"
           }
         ],
         "responses": {
@@ -446,6 +485,25 @@
                 "schema": {
                   "type": "integer"
                 }
+              },
+              "x-maviapi-unknown-params": {
+                "description": "Query params this endpoint does not take, comma separated; they were ignored. Send `x-maviapi-strict: 1` to get a free `400 unknown_param` instead.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Age": {
+                "description": "Seconds since the data was read from the site, as the body's `age`.",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "x-maviapi-fetched-at": {
+                "description": "When the data was read from the site (ISO 8601, UTC), as the body's `fetched_at`.",
+                "schema": {
+                  "type": "string",
+                  "format": "date-time"
+                }
               }
             },
             "content": {
@@ -454,10 +512,7 @@
                   "type": "object",
                   "properties": {
                     "data": {
-                      "type": [
-                        "object",
-                        "null"
-                      ],
+                      "type": "object",
                       "properties": {
                         "query": {
                           "type": [
@@ -511,67 +566,91 @@
                               }
                             }
                           }
-                        }
-                      }
-                    },
-                    "cached": {
-                      "type": [
-                        "boolean",
-                        "null"
-                      ],
-                      "example": false
-                    },
-                    "source": {
-                      "type": [
-                        "string",
-                        "null"
-                      ],
-                      "example": "thetrainline:locations-search"
-                    },
-                    "pagination": {
-                      "type": [
-                        "object",
-                        "null"
-                      ],
-                      "properties": {
-                        "total": {
+                        },
+                        "pagination": {
                           "type": [
-                            "integer",
+                            "object",
                             "null"
                           ],
-                          "example": 10
+                          "properties": {
+                            "count": {
+                              "type": [
+                                "integer",
+                                "null"
+                              ],
+                              "example": 30
+                            },
+                            "has_more": {
+                              "type": [
+                                "boolean",
+                                "null"
+                              ],
+                              "example": false
+                            },
+                            "next_cursor": {
+                              "type": "null",
+                              "example": null
+                            }
+                          }
                         },
-                        "limit": {
+                        "fetched_at": {
                           "type": [
-                            "integer",
+                            "string",
                             "null"
                           ],
-                          "example": 50
+                          "example": "2026-11-27T10:15:54.995Z"
                         },
-                        "offset": {
+                        "age": {
                           "type": [
                             "integer",
                             "null"
                           ],
                           "example": 0
-                        },
-                        "count": {
-                          "type": [
-                            "integer",
-                            "null"
-                          ],
-                          "example": 10
-                        },
-                        "has_more": {
-                          "type": [
-                            "boolean",
-                            "null"
-                          ],
-                          "example": false
                         }
                       }
+                    },
+                    "cached": {
+                      "type": "boolean",
+                      "description": "Whether this answer was served from the stored copy."
+                    },
+                    "source": {
+                      "description": "Where the data was read from."
+                    },
+                    "pagination": {
+                      "type": "object",
+                      "properties": {
+                        "total": {
+                          "type": "integer"
+                        },
+                        "limit": {
+                          "type": "integer"
+                        },
+                        "offset": {
+                          "type": "integer"
+                        },
+                        "count": {
+                          "type": "integer"
+                        },
+                        "has_more": {
+                          "type": "boolean"
+                        },
+                        "next_cursor": {
+                          "$ref": "#/components/schemas/NextCursor"
+                        }
+                      }
+                    },
+                    "fetched_at": {
+                      "$ref": "#/components/schemas/FetchedAt"
+                    },
+                    "age": {
+                      "$ref": "#/components/schemas/Age"
                     }
-                  }
+                  },
+                  "required": [
+                    "data",
+                    "cached",
+                    "source"
+                  ]
                 }
               }
             }
@@ -587,6 +666,9 @@
           },
           "403": {
             "$ref": "#/components/responses/AccountSuspended"
+          },
+          "410": {
+            "$ref": "#/components/responses/CursorExpired"
           },
           "429": {
             "$ref": "#/components/responses/RateLimited"
@@ -604,6 +686,37 @@
         "type": "http",
         "scheme": "bearer",
         "description": "Your maviapi API key, sent as `Authorization: Bearer <key>`. Create one at https://maviapi.com/dashboard/keys."
+      }
+    },
+    "parameters": {
+      "Fields": {
+        "name": "fields",
+        "in": "query",
+        "required": false,
+        "description": "Row fields to keep in a list answer, comma separated (at most 50). A dot reaches into an object, or into each object of an array (venue.city). A name no row has is a 400 that lists the fields a row has.",
+        "schema": {
+          "type": "string"
+        }
+      },
+      "Cursor": {
+        "name": "cursor",
+        "in": "query",
+        "required": false,
+        "description": "pagination.next_cursor of the previous page, sent with the same other params: the next page of the same stored copy of the list, so a walk never skips or repeats a row when the cache refreshes or the site reorders. A cursor for other params is 400 invalid_cursor; a copy that is gone is 410 cursor_expired (start again without cursor).",
+        "schema": {
+          "type": "string"
+        }
+      },
+      "MaxAge": {
+        "name": "max_age",
+        "in": "query",
+        "required": false,
+        "description": "Serve a stored answer only when it was read at most this many seconds ago (0 to 86400); older, the site is read again. 0 is refresh=true. Any other value is 400 invalid_max_age.",
+        "schema": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 86400
+        }
       }
     },
     "schemas": {
@@ -628,11 +741,35 @@
             "description": "Whether the same request may succeed later without any change. When true, wait the seconds in `Retry-After` (if sent) first."
           }
         }
+      },
+      "FetchedAt": {
+        "type": [
+          "string",
+          "null"
+        ],
+        "format": "date-time",
+        "description": "When this data was read from the site (ISO 8601, UTC). Also in the x-maviapi-fetched-at header.",
+        "example": "2026-11-25T09:30:00.000Z"
+      },
+      "Age": {
+        "type": [
+          "integer",
+          "null"
+        ],
+        "description": "Seconds since fetched_at: 0 for a fresh read, more for a stored answer. Also in the Age header.",
+        "example": 0
+      },
+      "NextCursor": {
+        "type": [
+          "string",
+          "null"
+        ],
+        "description": "Send as `cursor`, with the same other params, for the next page of the same copy of the list; null on the last page."
       }
     },
     "responses": {
       "BadRequest": {
-        "description": "A parameter is missing or cannot be used.",
+        "description": "A parameter is missing or cannot be used (`bad_request`), or, with the `x-maviapi-strict: 1` request header, a query param the operation does not take was sent (`unknown_param`, with the names in `params`).",
         "content": {
           "application/json": {
             "schema": {
@@ -733,6 +870,21 @@
               "error": "scrape_failed",
               "message": "The upstream source could not be fetched",
               "retryable": true
+            }
+          }
+        }
+      },
+      "CursorExpired": {
+        "description": "The stored copy of the list this cursor walks is gone. Start the list again without cursor.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "example": {
+              "error": "cursor_expired",
+              "message": "The copy of the list this cursor walks is gone. Start the list again without cursor.",
+              "retryable": false
             }
           }
         }
